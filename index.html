@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>图片裁切工具</title>
+    <style>
+        body { 
+            font-family: sans-serif; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            padding: 20px;
+            /* 你指定的背景壁纸 */
+            background-image: url(https://sgame-data-service-1252931805.cos.ap-nanjing.myqcloud.com/SnsShare/Image_1765313548392.jpg);
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            background-repeat: no-repeat;
+        }
+        /* 预览图恢复显示 */
+        #preview { 
+            max-width: 300px; 
+            margin-top: 20px; 
+            border: 1px solid #ccc; 
+        }
+        .controls { 
+            background: rgba(255,255,255,0.9); 
+            padding: 20px; 
+            border-radius: 8px; 
+        }
+        #status {
+            background: rgba(255,255,255,0.9);
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+        /* 隐藏h2标题 */
+        h2 {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h2>超高分辨率图片处理器</h2>
+    <div class="controls">
+        <input type="file" id="upload" accept="image/*"><br><br>
+        <!-- 按钮文字已修改，去掉分辨率 -->
+        <button onclick="processImage()">执行裁切并导出</button>
+    </div>
+    <div id="status"></div>
+    <img id="preview" alt="">
+    <script>
+        async function processImage() {
+            const fileInput = document.getElementById('upload');
+            const status = document.getElementById('status');
+            const preview = document.getElementById('preview');
+            if (!fileInput.files[0]) return alert("请先上传图片");
+            status.innerText = "正在处理图片，请稍候...";
+            const img = new Image();
+            img.src = URL.createObjectURL(fileInput.files[0]);
+            img.onload = function() {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                const targetW = 10008;
+                const targetH = 15568;
+                canvas.width = targetW;
+                canvas.height = targetH;
+                let drawW, drawH, offsetX = 0, offsetY = 0;
+                const imgRatio = img.width / img.height;
+                const targetRatio = targetW / targetH;
+                if (imgRatio > targetRatio) {
+                    drawH = img.height;
+                    drawW = img.height * targetRatio;
+                    offsetX = (img.width - drawW) / 2;
+                } else {
+                    drawW = img.width;
+                    drawH = img.width / targetRatio;
+                    offsetY = (img.height - drawH) / 2;
+                }
+                ctx.drawImage(img, offsetX, offsetY, drawW, drawH, 0, 0, targetW, targetH);
+                let quality = 0.2; 
+                let dataUrl = canvas.toDataURL('image/jpeg', quality);
+                preview.src = dataUrl;
+                // 状态提示简化，去掉了分辨率和体积文字
+                status.innerHTML = `处理完成！<br>`;
+                const link = document.createElement('a');
+                link.download = `output_${Date.now()}.jpg`;
+                link.href = dataUrl;
+                link.innerText = "点击下载图片";
+                status.appendChild(link);
+            };
+        }
+    </script>
+</body>
+</html>
